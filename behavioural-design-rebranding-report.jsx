@@ -444,7 +444,7 @@ export default function Report() {
       {/* Header */}
       <div style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)", padding: "32px 24px 20px", color: "white" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: "#94A3B8", textTransform: "uppercase", marginBottom: 6 }}>MEDvidi UXR&D — Brand Perception Study 2025–26</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: "#94A3B8", textTransform: "uppercase", marginBottom: 6 }}>behavioural design UXR&D — Brand Perception Study 2025–26</div>
           <h1 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 6px", lineHeight: 1.2, fontFamily: "'Fraunces', serif" }}>Rebranding Impact Report</h1>
           <p style={{ fontSize: 14, color: "#94A3B8", margin: 0 }}>New visuals + tone of voice vs. current design · n=49 · ADHD patients · Unmoderated concept test</p>
         </div>

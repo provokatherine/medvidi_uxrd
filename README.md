@@ -1,7 +1,7 @@
-# medvidi-uxrd
+# behavioural-design
 
-UX research & design skills for MedVidi, distributed as a Claude Code plugin
-marketplace.
+UX research & design skills for behavioural design, distributed as a Claude Code
+plugin marketplace.
 
 ## Plugins
 
@@ -17,8 +17,8 @@ OOUX skills for turning scenarios into information architecture.
 In any Claude Code session (or via the `claude` CLI):
 
 ```
-/plugin marketplace add provokatherine/medvidi_uxrd
-/plugin install ooux@medvidi-uxrd
+/plugin marketplace add provokatherine/behavioural-design
+/plugin install ooux@behavioural-design
 ```
 
 Then invoke the skill explicitly with `/ooux:ooux-extract`, or just describe an

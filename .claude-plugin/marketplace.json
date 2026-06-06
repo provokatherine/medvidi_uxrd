@@ -1,9 +1,9 @@
 {
-  "name": "medvidi-uxrd",
+  "name": "behavioural-design",
   "owner": {
     "name": "provokatherine"
   },
-  "description": "UX research & design skills for MedVidi — starting with OOUX object modeling.",
+  "description": "UX research & design skills for behavioural design — starting with OOUX object modeling.",
   "plugins": [
     {
       "name": "ooux",
@@ -13,8 +13,8 @@
         "name": "provokatherine"
       },
       "license": "MIT",
-      "homepage": "https://github.com/provokatherine/medvidi_uxrd",
-      "repository": "https://github.com/provokatherine/medvidi_uxrd",
+      "homepage": "https://github.com/provokatherine/behavioural-design",
+      "repository": "https://github.com/provokatherine/behavioural-design",
       "keywords": [
         "ooux",
         "orca",
