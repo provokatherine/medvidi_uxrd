@@ -1,0 +1,33 @@
+{
+  "name": "medvidi-uxrd",
+  "owner": {
+    "name": "provokatherine"
+  },
+  "description": "UX research & design skills for MedVidi — starting with OOUX object modeling.",
+  "plugins": [
+    {
+      "name": "ooux",
+      "source": "./",
+      "description": "OOUX skills. Currently includes ooux-extract: build an object model (mental model) from scenarios or raw input via the ORCA process.",
+      "author": {
+        "name": "provokatherine"
+      },
+      "license": "MIT",
+      "homepage": "https://github.com/provokatherine/medvidi_uxrd",
+      "repository": "https://github.com/provokatherine/medvidi_uxrd",
+      "keywords": [
+        "ooux",
+        "orca",
+        "information-architecture",
+        "ux",
+        "object-model",
+        "mental-model"
+      ],
+      "category": "ux",
+      "skills": [
+        "./.claude/skills"
+      ],
+      "strict": false
+    }
+  ]
+}
