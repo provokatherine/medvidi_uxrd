@@ -134,19 +134,19 @@ After completing all four ORCA rounds:
    things are one object or two, whether a relationship is 1:many or many:many,
    whether a CTA is human or system — that is a judgment call.
 
-2. **Ask all of them via `AskUserQuestion`.** Do not self-resolve any item on
-   that list. The only exception: if the source text contains explicit evidence
-   that settles the question, skip it and note that evidence inline in the
-   artifact. Evidence means the text says so — not that you inferred it.
-
-3. **Formulate each fork as a question with 2–4 concrete options.** Option text
-   must be self-contained — the user must not need to read the draft model to
+2. **Formulate each as a question with 2–4 concrete options.** Option text must
+   be self-contained — the user must not need to read the draft model to
    understand the choice. Include a brief consequence in each option label so
    the user sees what they are deciding (e.g. "One object — same data, filtered
    view" vs. "Two objects — separate data schemas").
+   The only exception: if the source text contains explicit evidence that
+   settles the question, skip it and note that evidence inline in the artifact.
+   Evidence means the text says so — not that you inferred it.
 
-4. **Call `AskUserQuestion`** with up to 4 questions per call. If there are more
-   than 4, chain a second call after the first resolves.
+3. **Invoke the `AskUserQuestion` tool** — this is a tool call, not text output.
+   Do NOT write the questions in plain text. Do NOT ask via chat. Use the
+   `AskUserQuestion` tool directly, with up to 4 questions per invocation.
+   If there are more than 4, invoke it again after the first call resolves.
 
 5. **Incorporate the answers** into the artifact. Write the artifact once, after
    all questions are resolved. Do not write a draft and then revise it.
