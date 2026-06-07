@@ -51,12 +51,29 @@ Do **not** guess past these. Use the `AskUserQuestion` tool when:
    steps vs. keeping a clinical/legal action explicit and audited), ask rather
    than assume.
 
-Outside these gates, extract first and **flag judgment calls in the artifact**
-rather than interrogating the user.
+Outside these gates, extract first. After completing all four ORCA rounds,
+collect every genuine modelling fork you encountered, then ask them — see
+"Judgment calls" below.
 
 ## Process — ORCA
 
 Run the rounds in order. Each is a distinct discipline; do not collapse them.
+
+### Progress — emit a status line before each step
+
+Before starting each step, emit a single line so the user can follow along:
+
+- `[Extract] Reading inputs…`
+- `[Extract] Round 1 — Objects…`
+- `[Extract] Round 2 — Relationships…`
+- `[Extract] Round 3 — CTAs…`
+- `[Extract] Round 4 — Attributes…`
+- `[Extract] Collecting judgment calls…`
+- `[Extract] Asking judgment calls…` *(only if AskUserQuestion is called)*
+- `[Extract] Writing artifact…`
+
+Emit the line in plain text **before** doing the work for that step — do not
+batch or defer updates to the end.
 
 ### 1. Objects — noun foray
 Pull the nouns from the source text. Keep only true objects: things with
@@ -105,6 +122,26 @@ For each object, list its attributes: **core content** (what the object *is*)
 and **metadata** (status, dates, ids, classifications). A lifecycle status
 belongs here when a CTA changes state (e.g. eRx status: active → cancelled).
 
+## Judgment calls — resolve before writing
+
+After completing all four ORCA rounds, before writing the artifact:
+
+1. **Collect** every genuine modelling fork: decisions where two designs are
+   both defensible but produce structurally different models, and where the
+   right answer depends on domain context only the user holds. Minor calls with
+   a clear default do not qualify — make the call yourself and note it inline
+   in the artifact.
+
+2. **Formulate** each fork as a question with 2–4 concrete options. Option text
+   must be self-contained — the user should not need to read the draft model to
+   understand the choice.
+
+3. **Call `AskUserQuestion`** with up to 4 questions per call. If there are more
+   than 4, chain a second call after the first resolves.
+
+4. **Incorporate the answers** into the artifact. Write the artifact once, after
+   all questions are resolved. Do not write a draft and then revise it.
+
 ## Output format
 
 Emit the object model as Markdown with these sections. (Approved generic
@@ -136,9 +173,6 @@ real-world domain they represent.
 
 ## Attributes
 - <Object>: <core content> | metadata: <status, dates, ids>
-
-## Judgment calls
-- <any assumption or modelling decision flagged for the user>
 ```
 
 ## Reference
