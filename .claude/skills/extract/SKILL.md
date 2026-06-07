@@ -51,12 +51,29 @@ Do **not** guess past these. Use the `AskUserQuestion` tool when:
    steps vs. keeping a clinical/legal action explicit and audited), ask rather
    than assume.
 
-Outside these gates, extract first and **flag judgment calls in the artifact**
-rather than interrogating the user.
+Outside these gates, extract first. After completing all four ORCA rounds,
+collect every genuine modelling fork you encountered, then ask them — see
+"Judgment calls" below.
 
 ## Process — ORCA
 
 Run the rounds in order. Each is a distinct discipline; do not collapse them.
+
+### Progress — emit a status line before each step
+
+Before starting each step, emit a single line so the user can follow along:
+
+- `[Extract] Reading inputs…`
+- `[Extract] Round 1 — Objects…`
+- `[Extract] Round 2 — Relationships…`
+- `[Extract] Round 3 — CTAs…`
+- `[Extract] Round 4 — Attributes…`
+- `[Extract] Collecting judgment calls…`
+- `[Extract] Asking judgment calls…` *(only if AskUserQuestion is called)*
+- `[Extract] Writing artifact…`
+
+Emit the line in plain text **before** doing the work for that step — do not
+batch or defer updates to the end.
 
 ### 1. Objects — noun foray
 Pull the nouns from the source text. Keep only true objects: things with
@@ -105,6 +122,42 @@ For each object, list its attributes: **core content** (what the object *is*)
 and **metadata** (status, dates, ids, classifications). A lifecycle status
 belongs here when a CTA changes state (e.g. eRx status: active → cancelled).
 
+## Judgment calls — this ends Turn 1
+
+**Turn 1 ends with an `AskUserQuestion` tool call. The artifact is written in
+Turn 2, after the user answers. These are two separate turns.**
+
+After emitting `[Extract] Collecting judgment calls…`, your remaining actions
+for Turn 1 are, in this exact order:
+
+1. Silently identify (do not output) every modelling decision you made that is
+   not directly stated in the source: any noun you treated as an object vs. an
+   attribute, any cardinality choice, any CTA assigned to human vs. system, any
+   two things you collapsed into one object or split into two.
+
+2. Emit `[Extract] Asking judgment calls…`
+
+3. **Call the `AskUserQuestion` tool.** This is a tool invocation — it produces
+   a form for the user, not text in the chat. Your output at this point is the
+   tool call only. Do not write any text before or after it. Do not list the
+   questions in prose. Do not summarise your ORCA findings. Just call the tool.
+   - Up to 4 questions per call; chain a second call in Turn 2 if there are more.
+   - Each question needs 2–4 options. Each option must name its structural
+     consequence (e.g. "One object — shared data schema" vs. "Two objects —
+     separate schemas, separate CTAs").
+   - Skip a question only if the source text explicitly states the answer —
+     not if you inferred it.
+
+4. **Your turn ends here.** Do not write the artifact. Do not continue past the
+   tool call.
+
+---
+
+**Turn 2** — after the user answers:
+
+Emit `[Extract] Writing artifact…` and write the complete object model,
+incorporating the user's answers. Write it once; do not draft-and-revise.
+
 ## Output format
 
 Emit the object model as Markdown with these sections. (Approved generic
@@ -136,9 +189,6 @@ real-world domain they represent.
 
 ## Attributes
 - <Object>: <core content> | metadata: <status, dates, ids>
-
-## Judgment calls
-- <any assumption or modelling decision flagged for the user>
 ```
 
 ## Reference
