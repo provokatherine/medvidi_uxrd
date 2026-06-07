@@ -68,6 +68,7 @@ Before starting each step, emit a single line so the user can follow along:
 - `[Extract] Round 2 — Relationships…`
 - `[Extract] Round 3 — CTAs…`
 - `[Extract] Round 4 — Attributes…`
+- `[Extract] Round 5 — Diagram…`
 - `[Extract] Collecting judgment calls…`
 - `[Extract] Asking judgment calls…` *(only if AskUserQuestion is called)*
 - `[Extract] Writing artifact…`
@@ -122,6 +123,22 @@ For each object, list its attributes: **core content** (what the object *is*)
 and **metadata** (status, dates, ids, classifications). A lifecycle status
 belongs here when a CTA changes state (e.g. eRx status: active → cancelled).
 
+### 5. Diagram — ER map
+Always produce a Mermaid `erDiagram` that encodes every relationship from
+Round 2. Rules:
+
+- Every object from Round 1 must appear as a node.
+- Every relationship from Round 2 must appear as an edge with its verb label.
+- Use standard Mermaid ER cardinality notation: `||--o{` (one-to-many),
+  `}o--o{` (many-to-many), `||--||` (one-to-one), `}o--o|` (many-to-one
+  optional).
+- Mark immutable-per-instance relationships with `"(immutable)"` in the label.
+- Do not abbreviate or omit objects to keep the diagram tidy — completeness
+  is the point.
+
+This diagram is not optional. It is the first section of the artifact, placed
+immediately after the target statement and before the Objects list.
+
 ## Judgment calls — this ends Turn 1
 
 **Turn 1 ends with an `AskUserQuestion` tool call. The artifact is written in
@@ -160,14 +177,22 @@ incorporating the user's answers. Write it once; do not draft-and-revise.
 
 ## Output format
 
-Emit the object model as Markdown with these sections. (Approved generic
-OOUX object-map format; this is the load-bearing artifact.)
+Emit the object model as Markdown with these sections in this order.
 
 ```
 # Object Model — <domain / scenario name>
 
 **Target:** The objects, their attributes, and their relationships mirror the
 real-world domain they represent.
+
+## Object map
+
+```mermaid
+erDiagram
+    <ObjectA> ||--o{ <ObjectB> : "<verb>"
+    <ObjectB> }o--|| <ObjectC> : "<verb> (immutable)"
+    ...
+```
 
 ## Objects
 - <Object> — <one line>; mark (surfaced) if not in the source text
@@ -190,6 +215,9 @@ real-world domain they represent.
 ## Attributes
 - <Object>: <core content> | metadata: <status, dates, ids>
 ```
+
+The `## Object map` Mermaid block is **mandatory** — the artifact is incomplete
+without it.
 
 ## Reference
 
