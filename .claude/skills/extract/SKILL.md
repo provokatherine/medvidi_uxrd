@@ -122,34 +122,41 @@ For each object, list its attributes: **core content** (what the object *is*)
 and **metadata** (status, dates, ids, classifications). A lifecycle status
 belongs here when a CTA changes state (e.g. eRx status: active → cancelled).
 
-## Judgment calls — resolve before writing
+## Judgment calls — this ends Turn 1
 
-**This step is mandatory.** Do not write the artifact until it is complete.
+**Turn 1 ends with an `AskUserQuestion` tool call. The artifact is written in
+Turn 2, after the user answers. These are two separate turns.**
 
-After completing all four ORCA rounds:
+After emitting `[Extract] Collecting judgment calls…`, your remaining actions
+for Turn 1 are, in this exact order:
 
-1. **List every decision you made** that is not directly and unambiguously
-   stated in the source material. Any time you chose between two possible
-   interpretations — which noun is an object vs. an attribute, whether two
-   things are one object or two, whether a relationship is 1:many or many:many,
-   whether a CTA is human or system — that is a judgment call.
+1. Silently identify (do not output) every modelling decision you made that is
+   not directly stated in the source: any noun you treated as an object vs. an
+   attribute, any cardinality choice, any CTA assigned to human vs. system, any
+   two things you collapsed into one object or split into two.
 
-2. **Formulate each as a question with 2–4 concrete options.** Option text must
-   be self-contained — the user must not need to read the draft model to
-   understand the choice. Include a brief consequence in each option label so
-   the user sees what they are deciding (e.g. "One object — same data, filtered
-   view" vs. "Two objects — separate data schemas").
-   The only exception: if the source text contains explicit evidence that
-   settles the question, skip it and note that evidence inline in the artifact.
-   Evidence means the text says so — not that you inferred it.
+2. Emit `[Extract] Asking judgment calls…`
 
-3. **Invoke the `AskUserQuestion` tool** — this is a tool call, not text output.
-   Do NOT write the questions in plain text. Do NOT ask via chat. Use the
-   `AskUserQuestion` tool directly, with up to 4 questions per invocation.
-   If there are more than 4, invoke it again after the first call resolves.
+3. **Call the `AskUserQuestion` tool.** This is a tool invocation — it produces
+   a form for the user, not text in the chat. Your output at this point is the
+   tool call only. Do not write any text before or after it. Do not list the
+   questions in prose. Do not summarise your ORCA findings. Just call the tool.
+   - Up to 4 questions per call; chain a second call in Turn 2 if there are more.
+   - Each question needs 2–4 options. Each option must name its structural
+     consequence (e.g. "One object — shared data schema" vs. "Two objects —
+     separate schemas, separate CTAs").
+   - Skip a question only if the source text explicitly states the answer —
+     not if you inferred it.
 
-5. **Incorporate the answers** into the artifact. Write the artifact once, after
-   all questions are resolved. Do not write a draft and then revise it.
+4. **Your turn ends here.** Do not write the artifact. Do not continue past the
+   tool call.
+
+---
+
+**Turn 2** — after the user answers:
+
+Emit `[Extract] Writing artifact…` and write the complete object model,
+incorporating the user's answers. Write it once; do not draft-and-revise.
 
 ## Output format
 
