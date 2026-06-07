@@ -26,6 +26,26 @@ An ER model mirrors reality. An IA mirrors behaviour. These are different
 optimizations; this skill does the second. A patient-centric ER model does not
 imply a patient-centric IA.
 
+## Theoretical grounding
+
+The analysis draws on four converging frameworks. Each asks a distinct question
+about the same objects:
+
+| Framework | Question it answers | Applied in |
+|---|---|---|
+| **Jobs-to-be-Done** (Singer, Intercom) | What job triggers the session? The object that answers that job is the entry point. | Step 1 — Trigger column |
+| **OOUX** (Sophia Prater) | Which object accumulates the most CTAs and passes SIP (Structure, Instances, Purpose) with a Purpose as a work focal point? | Step 1 — CTA density + SIP pre-filter |
+| **Contextual Design** (Beyer & Holtzblatt) | What appears at the top of the consolidated sequence model — i.e. the first step across all users? | Step 1 — Trigger; Step 3 — stress test |
+| **Activity Theory** (Engeström) | What is the shared work object the whole team acts upon over time, and what crosses team boundaries as work progresses? | Step 1 — Lifecycle + cross-team handoff columns |
+
+These frameworks converge: the Primary object is the one that **triggers work sessions,
+carries the lifecycle, accumulates actions, and crosses teams**. Domain importance alone
+does not make an object primary.
+
+**Navigation naming note:** Noun-based labels are empirically faster to navigate than verb
+phrases (10.6 s vs. 19.8 s median — NNG research). A work-centric IA does not mean verb
+navigation. The primary object should be named as a noun: "Tasks" not "Resolve Issues."
+
 ## Scope
 
 In: an object model (from `/extract`) + scenario/CTA source → IA recommendation.
@@ -56,20 +76,29 @@ tell the user to run `/extract` first.
 
 ### Step 1 — Entry object analysis
 
-For **every object** in the model, answer these four questions:
+**SIP pre-filter:** Before scoring, eliminate objects that fail the Purpose test.
+An object passes SIP if it has **Structure** (defined content schema), **Instances**
+(many discrete instances, not a singleton), and **Purpose** (is a focal point of
+actor goals — not just consulted as a lookup). Objects that fail Purpose are
+Reference objects and cannot be Primary. Apply this as a filter, not a score.
 
-| Question | What to look for |
-|---|---|
-| **Trigger** | Does a session start *because this object exists and needs action* (e.g. a task assigned to you)? Or does the actor navigate to it as a lookup to support action on something else? |
-| **CTA density** | How many CTAs in the model live directly on this object? Objects with the most CTAs are the most action-dense. |
-| **Lifecycle ownership** | Does this object carry a status that advances as work progresses (e.g. pending → in progress → closed)? Lifecycle owners are natural focal points. |
-| **Cross-team handoff** | Does this object pass between teams as work advances, or does it stay with one team? Objects that cross teams define the shared work unit. |
+For **every object that passes SIP**, score it on four dimensions:
+
+| Dimension | Framework | What to look for |
+|---|---|---|
+| **Trigger job** | JTBD | What job does the actor perform when they interact with this object? Does a session *begin* because this object has something to do? Write the job in one phrase: "resolve a reported issue", "look up patient history", "check drug stock." Jobs that start sessions = Primary trigger. |
+| **CTA density** | OOUX | Count CTAs in the model that live directly on this object. High count = natural action focal point. |
+| **Lifecycle ownership** | Activity Theory / OOUX | Does this object carry a status that advances as work progresses (pending → resolved)? Lifecycle owners are natural case objects. |
+| **Cross-team handoff** | Contextual Design | Does this object pass between teams as work advances? If yes, it is the shared work unit — it must surface at every handoff boundary. |
 
 Classify each object:
 
-- **Primary** — triggers sessions, action-dense, owns the lifecycle, crosses teams. The IA should centre on this.
-- **Context** — looked up to inform action on the Primary; few direct CTAs; stable while work happens.
-- **Reference** — static catalogue data; consulted, rarely changed.
+- **Primary** — triggers sessions, action-dense, owns the lifecycle, crosses teams.
+  The IA should centre on this.
+- **Context** — looked up to inform action on the Primary; few direct CTAs; stable
+  while work happens. Surfaces as a panel or tab within the Primary screen.
+- **Reference** — failed SIP Purpose, or: static catalogue data consulted rarely.
+  Accessible via global search, not primary navigation.
 
 Produce a scored table. Be explicit when an object that looks "important" in
 the domain model scores as Context in the IA (e.g. Patient may be central to
@@ -102,13 +131,13 @@ distinct, say so and explain why the third collapses into one of them.
 
 Select the **3 most common or highest-stakes scenarios** from the source
 (or from the CTA list in the model). Walk each scenario through each IA
-candidate:
+candidate using the Contextual Design stress-test method:
 
 - Count navigation steps from load to first meaningful action.
 - Note whether the required context (patient info, prescription status,
   prior notes) is visible without an extra lookup.
 - Flag any step where the actor must hold information in their head because
-  the IA does not surface it.
+  the IA does not surface it ("mental load" — a Contextual Design breakdown marker).
 
 Summarise as a matrix:
 
@@ -122,7 +151,9 @@ Summarise as a matrix:
 
 State the recommended IA. No hedging. Support it with:
 
-1. The entry object analysis result that drove the choice.
+1. The entry object analysis result that drove the choice — name the framework(s)
+   that confirm it (JTBD: session trigger; OOUX: CTA density; Activity Theory:
+   lifecycle + cross-team; Contextual Design: sequence model head).
 2. The stress-test result that confirms it.
 3. The one real trade-off it makes — name who is underserved and state the
    mitigation (a secondary entry point, a search shortcut, a role-specific
@@ -158,12 +189,12 @@ opinion.
 
 ## Entry object scoring
 
-| Object | Trigger? | CTA density | Lifecycle? | Cross-team? | Classification |
-|---|---|---|---|---|---|
-| … | … | … | … | … | Primary / Context / Reference |
+| Object | SIP Purpose? | Trigger job | CTA density | Lifecycle? | Cross-team? | Classification |
+|---|---|---|---|---|---|---|
+| … | Pass / Ref | "<job phrase>" | N | Y/N | Y/N | Primary / Context / Reference |
 
-Key insight: <one sentence naming the Primary object and why the obvious
-alternative — the domain-central object — scores as Context instead>
+Key insight: <one sentence naming the Primary object, the trigger job that
+confirms it, and why the obvious domain-central object scores as Context instead>
 
 ## IA candidates
 
@@ -190,7 +221,8 @@ alternative — the domain-central object — scores as Context instead>
 
 **Option [X] — <Object>-centric**
 
-<Two-sentence rationale citing entry object score and stress-test result.>
+<Two-sentence rationale. First sentence: entry object score + which frameworks
+confirm it. Second sentence: stress-test result.>
 
 Trade-off: <who is underserved> — mitigated by <what>.
 
@@ -198,13 +230,13 @@ Trade-off: <who is underserved> — mitigated by <what>.
 
 ```mermaid
 graph TD
-  Home["Home — <Primary object> list / queue"]
+  Home["Home — <Primary object> queue / list"]
   Home --> PrimaryRecord["<Primary> record"]
   PrimaryRecord --> ContextA["<Context object A> panel"]
   PrimaryRecord --> ContextB["<Context object B> tab"]
   PrimaryRecord --> Actions["CTAs: <list>"]
-  Home --> GlobalSearch["Global search → <Reference object>"]
-  GlobalSearch --> PatientRecord["<Reference> record"]
-  PatientRecord --> LinkedPrimary["Linked <Primary objects>"]
+  Home --> GlobalSearch["Global search → <Reference/Context object>"]
+  GlobalSearch --> ContextRecord["<Context> record"]
+  ContextRecord --> LinkedPrimary["Linked <Primary objects>"]
 ```
 ```
