@@ -8,6 +8,47 @@ screenshots of prescription-issue workflows (Scenarios 1–2).
 
 ---
 
+## Object map
+
+```mermaid
+erDiagram
+    Patient ||--o{ Visit : "has"
+    Patient ||--o{ Prescription : "has"
+    Patient ||--o{ Payment : "has"
+    Patient }o--o{ Pharmacy : "designates (primary / backup)"
+    Patient ||--o{ Document : "has"
+    Patient ||--o{ InsuranceClaim : "has"
+    Patient }o--o| HealthPlan : "covered by"
+    Patient ||--o{ Refund : "has"
+    Patient ||--o{ Call : "has"
+    Patient ||--o{ Review : "has"
+    Patient ||--o{ Task : "subject of"
+
+    Visit }o--|| Provider : "conducted by"
+    Visit }o--|| Pharmacy : "at (immutable)"
+    Visit ||--o{ Prescription : "generates"
+    Visit ||--o{ Document : "generates"
+    Visit ||--o{ Payment : "billed as"
+
+    Prescription }o--|| Provider : "written by"
+    Prescription }o--|| Pharmacy : "sent to (immutable)"
+    Prescription }o--|| Medication : "for"
+    Prescription }o--o| Task : "referenced by"
+
+    Pharmacy }o--o{ Medication : "stocks"
+
+    Task }o--o| Visit : "references"
+    Document }o--o| Visit : "references"
+    Document }o--o| Provider : "references"
+
+    InsuranceClaim }o--|| HealthPlan : "under"
+    InsuranceClaim }o--|| Visit : "for"
+
+    Refund }o--|| Visit : "reverses"
+```
+
+---
+
 ## Objects
 
 - **Patient** — the person receiving care; central record in the CRM; the CRM
