@@ -4,6 +4,87 @@
 
 ---
 
+## Schema
+
+```mermaid
+flowchart TD
+    Patient(["**Patient**"])
+
+    subgraph CLINICAL["  Clinical  "]
+        Rx["Prescription · eRx"]
+        Med["Medication"]
+        Ph["Pharmacy"]
+        Prov["Provider"]
+        Appt["Appointment"]
+    end
+
+    subgraph OPS["  Operations  "]
+        Task["Task"]
+        Bill["Superbill"]
+        Ltr["Letter / Document"]
+        Ref["Refund"]
+        Call["Call"]
+    end
+
+    subgraph REC["  Patient Record  "]
+        MH["Medical History"]
+        Mbr["Membership"]
+    end
+
+    AE(["Activity Event\ninvestigation only"])
+
+    Patient -->|"1 : many"| Rx
+    Patient -->|"1 : many"| Appt
+    Patient <-->|"many : many\nprimary / backup"| Ph
+    Patient -->|"1 : many"| Task
+    Patient -->|"1 : many"| Bill
+    Patient -->|"1 : many"| Ltr
+    Patient -->|"1 : many"| Ref
+    Patient -->|"1 : many"| Call
+    Patient -->|"1 : 1"| MH
+    Patient -->|"1 : 1"| Mbr
+
+    Rx ==>|"for · immutable"| Med
+    Rx ==>|"sent to · immutable"| Ph
+    Rx ==>|"written by · immutable"| Prov
+    Rx -->|"issued at · many : 1"| Appt
+    Rx -->|"triggers"| Task
+
+    Med <-.->|"stocks · many : many\n⚠ unverified on auto path"| Ph
+
+    Appt -->|"conducted by · many : 1"| Prov
+    Appt -->|"generates · 1 : 1"| Bill
+
+    Prov -->|"authors"| Ltr
+    Task -.->|"escalated to"| Prov
+
+    Patient -.->|"logged in"| AE
+    Rx -.-> AE
+    Task -.-> AE
+    Appt -.-> AE
+    Call -.-> AE
+
+    classDef patientStyle fill:#1b4332,color:#fff,stroke:#1b4332
+    classDef clinicalStyle fill:#1d3557,color:#fff,stroke:#1d3557
+    classDef opsStyle fill:#6d4c41,color:#fff,stroke:#4e342e
+    classDef recStyle fill:#37474f,color:#fff,stroke:#263238
+    classDef aeStyle fill:#546e7a,color:#fff,stroke:#37474f,stroke-dasharray:4
+
+    class Patient patientStyle
+    class Rx,Med,Ph,Prov,Appt clinicalStyle
+    class Task,Bill,Ltr,Ref,Call opsStyle
+    class MH,Mbr recStyle
+    class AE aeStyle
+
+    style CLINICAL fill:#e8f4fd,stroke:#1d3557,color:#1d3557
+    style OPS fill:#fdf3ee,stroke:#6d4c41,color:#6d4c41
+    style REC fill:#eceff1,stroke:#37474f,color:#37474f
+```
+
+> **Edge key:** `==>` immutable binding (cancel + new instance to change) · `-->` structural relationship · `-.->` optional / escalation / logging · `<-->` bidirectional role
+
+---
+
 ## Objects
 
 - **Patient** — person enrolled in care; the central subject of most workflows
