@@ -5,10 +5,10 @@ plugin marketplace.
 
 ## Plugins
 
-### `ooux`
+### `mental-models`
 OOUX skills for turning scenarios into information architecture.
 
-- **`ooux-extract`** — builds an object model (a mental model) from scenarios or
+- **`extract`** — builds an object model (a mental model) from scenarios or
   raw input by running the ORCA process (Objects → Relationships → CTAs →
   Attributes). Extractor only; it does not review or audit an existing product.
 
@@ -18,10 +18,10 @@ In any Claude Code session (or via the `claude` CLI):
 
 ```
 /plugin marketplace add provokatherine/behavioural-design
-/plugin install ooux@behavioural-design
+/plugin install mental-models@behavioural-design
 ```
 
-Then invoke the skill explicitly with `/ooux:ooux-extract`, or just describe an
+Then invoke the skill explicitly with `/mental-models:extract`, or just describe an
 OOUX/object-mapping task and it auto-triggers.
 
 ## Use without installing
