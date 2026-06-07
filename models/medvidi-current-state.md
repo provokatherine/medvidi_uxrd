@@ -1,50 +1,54 @@
-# Object Model — MEDvidi Clinical CRM (current state)
+# Object Model — MEDvidi Support Operations (current state)
 
 **Target:** The objects, their attributes, and their relationships mirror the
 real-world domain they represent.
 
-Sources: roles + scenarios spreadsheet (Numbers doc); screenshots of
-prescription-issue workflows (Scenarios 1–3).
+Sources: roles + scenarios spreadsheet (Numbers doc, 12 teams, 35 scenarios);
+screenshots of prescription-issue workflows (Scenarios 1–2).
 
 ---
 
 ## Objects
 
-- **Patient** — the person receiving care; the CRM's central record (system
-  label: "Lead"); has demographics, contact info, state, and preferred
-  pharmacies
-- **Prescription (eRx)** — an electronic prescription binding one medication to
-  one pharmacy per instance; carries a status lifecycle; immutable per pharmacy
-  assignment
-- **Medication** — the drug named in a prescription *(surfaced: implied by every
-  eRx but not always stated explicitly)*
-- **Pharmacy** — a dispensing location; can hold a primary or backup role
-  relative to a patient — "backup pharmacy" is **not** a separate object; it is
-  Pharmacy in a role on the Patient↔Pharmacy relationship
-- **Appointment** — a scheduled clinical encounter linking patient, provider,
-  and date; prescriptions are issued against it
+- **Patient** — the person receiving care; central record in the CRM; the CRM
+  label "Lead" is not a separate domain object — it maps to Patient (for
+  identity and contact) or Visit (for the clinical encounter) or Payment (for
+  the transaction), depending on which data is referenced
+- **Visit** — one scheduled clinical encounter linking patient, provider, and
+  date; the CRM's "Lead" is one successful visit; prescriptions are issued at
+  a visit
+- **Payment** *(surfaced)* — the financial transaction associated with a visit;
+  distinct from Refund (which is a reversal); the third thing the CRM "Lead"
+  maps to
+- **Prescription (eRx)** — an electronic prescription binding one medication
+  to one pharmacy per instance; status lifecycle is carried as attributes;
+  immutable per pharmacy assignment
+- **Medication** *(surfaced)* — the drug named in a prescription; relevant when
+  a pharmacy cannot stock it and a backup must carry the same drug
+- **Pharmacy** — a dispensing location; a patient may designate primary and
+  backup roles — "backup pharmacy" is not a separate object; it is Pharmacy in
+  a role on the Patient↔Pharmacy relationship
 - **Provider** — the clinician who prescribes and treats; appears as both actor
   (issues eRx, resolves tasks) and content object (profile viewable by staff)
-- **Task** — a typed, prioritized, statused work item routed to support staff or
-  a provider; the operational backbone of the prescription-issue workflows shown
-  in the screenshots; currently carries multi-step instructions as free-text
-  description
-- **Insurance Claim** — a request to an insurer to cover medication cost; may
-  require a Prior Authorization as a prerequisite
-- **Prior Authorization** *(surfaced)* — an insurer pre-approval for a specific
-  medication; may precede or travel alongside a claim
-- **Medical Record** — the patient's consolidated clinical history; subject of
-  subpoenas, PCP requests, and clinical letter requests
-- **Letter** — a clinical or administrative document issued on behalf of a
-  patient; subtype attribute carries: ESA, treatment, accommodation, discharge,
-  clearance, EKG, good faith dispensing
-- **Refund** — a financial reimbursement tied to a specific appointment; issued
-  by the Refund team
-- **Superbill** *(surfaced)* — a billing summary document the patient submits to
-  their own insurer; distinct from a Refund (payment out vs. document for
-  self-claim)
-- **Phone Call** — a logged inbound or outbound call interaction linked to a
-  patient; can trigger task creation
+- **Task** — a typed, prioritized, statused work item routed to a support team
+  or a provider; types: Prescription Issue, Refund, Care Quality Audit,
+  Discharge, Tech Issue; one object with a Type attribute
+- **Document** — any clinical record or outbound correspondence; one object
+  with a Type attribute covering: Medical Records, ESA Letter, Treatment
+  Letter, Accommodation Letter, Discharge Letter, Clearance Letter, EKG Letter,
+  Good Faith Dispensing form, Superbill; each type may have different recipients
+  and permissions but the same structural schema
+- **Insurance Claim** — a request to an insurer to cover medication cost;
+  includes Prior Authorization tracking as a status on the claim
+- **Health Plan** *(surfaced)* — the patient's insurance coverage; referenced
+  by Insurance Claims
+- **Refund** — a financial reversal tied to a specific visit; issued by the
+  Refund team; distinct from Payment (reversal vs. original charge) and from a
+  Superbill Document (document for self-claim vs. payment out)
+- **Call** — a logged inbound or outbound phone interaction linked to a
+  patient; carries a rating; auditable by Team Leads and MedOps
+- **Review** *(surfaced)* — an online patient review about MEDvidi on external
+  platforms; tracked and responded to by the Review Team
 
 ---
 
@@ -52,209 +56,221 @@ prescription-issue workflows (Scenarios 1–3).
 
 ### Core matrix
 
-| | Patient | Prescription | Medication | Pharmacy | Appointment | Provider | Task |
+| | Patient | Visit | Prescription | Medication | Pharmacy | Provider | Task |
 |---|---|---|---|---|---|---|---|
-| **Patient** | — | has `1:many` | mediated via eRx | designates `many:many` *(primary/backup role on rel.)* | has `1:many` | treated by `many:1` | subject of `1:many` |
-| **Prescription** | | — | specifies `many:1` | bound to `many:1` *(immutable)* | issued at `many:1` | written by `many:1` | subject of `1:many` |
-| **Medication** | | | — | stocked by `many:many` | — | — | — |
-| **Pharmacy** | | | | — | — | — | — |
-| **Appointment** | | | | — | — | conducted by `many:1` | triggers `1:many` |
+| **Patient** | — | has `1:many` | has `1:many` | mediated via eRx | designates `many:many` *(primary/backup role on rel.)* | treated by `many:1` | subject of `1:many` |
+| **Visit** | | — | generates `1:many` | — | at one *(immutable per instance)* | conducted by `many:1` | triggers `1:many` |
+| **Prescription** | | | — | specifies `many:1` | bound to `many:1` *(immutable per instance)* | written by `many:1` | referenced by `many:1` |
+| **Medication** | | | | — | stocked by `many:many` | — | — |
+| **Pharmacy** | | | | | — | — | — |
 | **Provider** | | | | | | — | assigned `1:many` |
 | **Task** | | | | | | | — |
 
 **Notes:**
-- **Prescription is immutable per pharmacy.** Moving a prescription is not a
-  reroute or edit — it is cancel the old eRx + create a new one to the backup
-  pharmacy. Two instances, not one edited record. Confirmed by Scenarios 1–3.
+- **Prescription is immutable per pharmacy.** Moving an eRx is not a reroute
+  — it is cancel old + create new to the backup pharmacy. Two instances.
 - **Primary/backup role lives on the Patient↔Pharmacy relationship**, not on
   the Pharmacy object itself.
-- **Pharmacy stocks Medication** (many:many) is load-bearing: a backup
-  substitution is only valid if that pharmacy carries the drug.
+- **Pharmacy stocks Medication** (many:many) is load-bearing: a backup is only
+  valid if that pharmacy carries the drug.
+- **CRM "Lead" maps to Visit** (one successful visit = one Lead record); not
+  modelled as a separate object.
 
 ### Peripheral relationships
 
+- Patient `1:many` → Payment
+- Patient `1:many` → Document
 - Patient `1:many` → Insurance Claim
-- Patient `1:1` → Medical Record
-- Patient `1:many` → Letter
+- Patient `1:1` → Health Plan *(or 1:many over time)*
 - Patient `1:many` → Refund
-- Patient `1:many` → Superbill
-- Patient `1:many` → Phone Call
-- Insurance Claim `many:1` → Prior Authorization (PA may be required before claim)
-- Insurance Claim `many:1` → Medication (claim covers a specific drug)
-- Insurance Claim `many:1` → Pharmacy (claim initiated by a pharmacy)
-- Refund `many:1` → Appointment
-- Superbill `many:1` → Appointment
-- Medical Record `1:many` → Letter (letters draw from or reference clinical record)
+- Patient `1:many` → Call
+- Patient `1:many` → Review
+- Payment `many:1` → Visit
+- Document `many:1` → Patient
+- Document `many:1` → Visit *(optional; document may reference the encounter)*
+- Document `many:1` → Provider *(optional; author or referenced clinician)*
+- Insurance Claim `many:1` → Health Plan
+- Insurance Claim `many:1` → Visit
+- Insurance Claim `many:1` → Medication *(claim covers a specific drug)*
+- Insurance Claim `many:1` → Pharmacy *(claim may be initiated by pharmacy)*
+- Refund `many:1` → Visit
+- Call `many:1` → Patient
 
 ---
 
 ## CTAs
 
-### Prescription issue workflow (Scenarios 1–3 in screenshots)
+### Prescription issue workflow (Scenarios 1–2 in screenshots)
 
 **Support Agent:**
-- *Submit Prescription Issue* — creates a task when a pharmacy reports it can't fill
-- *Cancel eRx* — requests cancellation of one or more prescriptions at the pharmacy
-- *Assign Task to Provider* — escalates the prescription issue task to the prescribing provider
+- *Submit Prescription Issue* — creates a Prescription Issue Task when a
+  pharmacy reports it can't fill
+- *Cancel eRx* — requests cancellation of one or more prescriptions at the
+  pharmacy; sets status to "Cancel requested"
+- *Assign Task to Provider* — escalates the task to the prescribing provider
 - *Send SMS to Patient* — notifies patient of re-prescription outcome
 - *Close Task* — marks the prescription issue task resolved
 
 **Provider:**
 - *Re-prescribe / Accept* — issues a new eRx, typically to the backup pharmacy
-- *Reject Re-prescription* (with note) — declines; triggers a new task back to support
+- *Reject Re-prescription* (with mandatory note) — declines; triggers a new
+  task back to support
 
 **System (automatic):**
-- Detects pharmacy no-response (> 5 min in "Cancel requested") → sets prescription
-  status to "No response" → creates a new task for the support agent
-- Tracks pharmacy approval of cancellation → sets prescription status to "Canceled"
-- Propagates provider rejection note into the new task description
+- Detects pharmacy no-response (> 5 min in "Cancel requested") → sets
+  prescription status to "No response" → escalates Task to in-progress
+- Tracks pharmacy approval of cancellation → sets status to "Canceled"
+- Records provider rejection note into the new Task description
+- Logs all status transitions as timestamped events on the patient timeline
 
-**Pre-existing (set before these CTAs run):**
+**Pre-existing (not CTAs here):**
 - Patient has designated a preferred and backup pharmacy
-- Appointment date, provider, and prescribed medications are already established
+- Appointment date, provider, and prescribed medications are established
 
 ---
 
-### Other team CTAs (from scenarios spreadsheet)
+### Other team CTAs (from roles + scenarios spreadsheet)
 
-**Administrative Assistant:**
+**Administrative Assistants:**
 - *Verify Patient Identity* — confirm identity before any ePHI exchange
-- *Reschedule Appointment* — update date/provider; change ZIP + preferred pharmacy if patient is in a different state
-- *Contact Pharmacy* — resolve pharmacy issues (wrong name on file, out-of-stock, missing eRx)
-- *Provision Patient on 3rd-party Platform* — DoseSpot, Questlab
-- *Update Patient Information*
+  (system aids: surfaces face photo, DOB, address for comparison)
+- *Reschedule Visit* — update date/provider; change ZIP + preferred pharmacy
+  if patient is in a different state
+- *Contact Pharmacy* — resolve pharmacy issues (wrong name, out of stock,
+  missing eRx)
+- *Provision Patient on External Platform* — DoseSpot, Questlab (manual
+  trigger; system executes)
+- *Update Patient Information* — name, address/ZIP, state, preferred pharmacy
+- *Review Call Recording* *(Team Lead)* — investigate low-rated calls
 
-**Team Lead:**
-- *Review Call Recording* — investigate low-rated calls
+**TIER 1 (Customer Support):**
+- *Verify Patient Identity*
+- *Reschedule Visit* (including state change: ZIP update + new preferred
+  pharmacy)
+- *Log Prescription Issue* → creates Prescription Issue Task
+- *Relay Patient Info to Pharmacy* — ICD codes, medication names, ePHI bundle
 
-**Prior Authorization Agent:**
-- *Submit Insurance Claim*
-- *Submit Appeal or Additional Information*
+**Prior Authorization:**
+- *Verify Patient Identity*
+- *Submit Insurance Claim* — links Visit, Health Plan, Documents
+- *Submit Appeal / Provide Additional Information* — responds to insurer denial
+
+**Sales:**
+- *Verify Patient Identity*
+- *Initiate Sales Outreach* — log contact attempt on Patient
 
 **Medical Records:**
-- *Reply to Subpoena*
-- *Fulfill Medical Records Request*
-- *Send Letter* — ESA, treatment, accommodation, discharge, clearance, EKG,
-  good faith dispensing form
+- *Verify Patient Identity*
+- *Release Medical Records* — respond to patient / PCP / subpoena request
+  (Document type: Medical Records)
+- *Send Document* — type selected from: ESA Letter, Treatment Letter,
+  Accommodation Letter, EKG Letter, Clearance Letter, Good Faith Dispensing
+  form, Discharge Letter, Superbill
 
 **Refund Team:**
-- *Issue Refund*
-- *Issue Superbill*
-- *Appeal Dispute* — malicious chargebacks
-- *Maintain Refund Report*
+- *Issue Refund* — linked to Visit
+- *Send Superbill* — patient-requested Document for insurance self-claim
+- *File Refund Appeal* — flag malicious dispute, submit appeal
+- *Log Refund Report Entry*
 
-**Care Manager:**
-- *Guide Patient on Medication Schedule / Adverse Reactions*
+**Care Managers:**
+- *Verify Patient Identity*
+- *Log Outreach Note* — medication schedule guidance, adverse reactions,
+  suicidal ideation check-in; recorded against patient record
 
 **Review Team:**
-- *Analyze Patient Review*
-- *Contact Patient for Positive Review*
+- *Log Review Analysis* — sentiment, platform, patient reference
+- *Send Review Request Outreach* — contact patient to leave a positive review
 
 **Tech Support:**
-- *Assist Provider with Technical Issue*
-- *Audit Care Quality*
+- *Route Provider Tech Issue* — links to Provider and Task; escalates to
+  Engineering if system-level
 
-**Sales Agent:**
-- *Contact Patient for Sale*
+**MedOps:**
+- *Run Care Quality Audit* — creates Task type: Care Audit; reads full patient
+  record
+
+**Engineering:**
+- *Debug Platform Issue* — reads production environment data; reads full
+  patient record for context
+
+**Finance Team:**
+- *Run Financial Audit* — reads Appointment and Payment data for
+  salary/revenue discrepancy analysis
 
 ---
 
 ## Permissions (separate layer)
 
-| Role | Read | Edit / Act |
-|---|---|---|
-| Admin Assistant | Patient (full ePHI), Prescription, Pharmacy, Appointment, Provider | Update patient info, reschedule appointment, contact pharmacy |
-| Customer Support Tier 1 | Patient (full ePHI), Prescription, Pharmacy, Provider, Task | Log pharmacy issue, share ePHI with pharmacy, create/close task |
-| Prior Authorization | Patient (partial ePHI), Insurance Claim, Medication | Submit claim, submit appeal |
-| Medical Records | Patient, Medical Record, Letter | Create/send letter, reply to subpoena |
-| Refund Team | Patient, Appointment, Refund, Superbill | Issue refund, issue superbill, appeal dispute |
-| Care Manager | Patient, Appointment, Provider | Guide patient |
-| Provider | Patient (clinical ePHI), Prescription, Appointment, Task | Accept/reject re-prescription, create eRx |
-| Sales | Patient (Lead History, State) | Contact patient |
-| Tech Support | Patient (minimal), Appointment, Provider | Assist provider, audit care quality |
-| Engineering | System logs | Platform maintenance |
-| Finance | Appointment, Refund | Financial audit |
+Derived from ePHI Read / Write columns in the scenarios spreadsheet.
+
+| Role | ePHI Read | ePHI Write | Notes |
+|---|---|---|---|
+| Administrative Assistants | Address/ZIP, DOB, Face Photos, Full Name, Appointment Date, Medical Documents, Patient ID, Phone Number | Full Name, Appointment Date, ZIP | No write on clinical data |
+| TIER 1 | Address/ZIP, DOB, Face Photos, Full Name, Appointment Date, Medical Documents | Appointment Date, ZIP | Same clinical read as AA; no clinical write |
+| Prior Authorization | Address/ZIP, DOB, Face Photos, Full Name, Appointment Date, Health Plan Number, Medical Documents | — | Read-only |
+| Sales | Face Photos, Full Name, DOB, Address/ZIP | — | Minimal ePHI; no write |
+| Medical Records | Address/ZIP, DOB, Full Name, Appointment Date, Medical Documents, Discharge Date | — | Write access is document issuance, not ePHI fields |
+| Refund Team | Appointment Date, Full Name, Medical Documents, DOB, Face Photos | — | Read-only |
+| Care Managers | Address/ZIP, DOB, Full Name, Appointment Date, Medical Documents | — | Read-only |
+| Review Team | Full Name, Appointment Date | — | Minimal ePHI |
+| Tech Support | Address/ZIP, DOB, Full Name, Appointment Date | — | Read-only; routing role |
+| MedOps | Full patient record (all ePHI fields) | — | Audit role; broadest read access |
+| Engineering | Full patient record (all ePHI fields) | — | Production debugging; read-only |
+| Finance Team | Appointment Date, Discharge Date | — | Financial fields only; no clinical ePHI |
 
 ---
 
 ## Attributes
 
-- **Patient**: First Name, Last Name, DOB, Gender, Email, Phone, Address/ZIP,
-  State | metadata: Patient ID, Face Photos, Lead History (CRM activity log),
-  Preferred Pharmacy (primary/backup), Discharge Date, Health Plan Number,
-  Sex, Timezone
+- **Patient**: First Name, Last Name, DOB, Gender/Sex, Email, Phone,
+  Address/ZIP, State, Face Photo, Patient ID, Health Plan Number, Preferred
+  Pharmacy (primary / backup) | metadata: status (Active / Discharged),
+  Discharge Date, Timezone, created date
 
-- **Prescription (eRx)**: Medication, Dosage, Quantity, Pharmacy, Prescriber,
-  Appointment | metadata: status (`Active → Cancel requested → No response →
-  Canceled manually` or `Canceled`), Date prescribed
+- **Visit**: Date, Time, Type | metadata: status (Scheduled / Completed /
+  Rescheduled / Cancelled), Provider (ref), Pharmacy (ref, immutable),
+  Patient (ref)
+
+- **Payment**: Amount, Method | metadata: status (Paid / Refunded / Disputed),
+  Visit (ref), Patient (ref), date
+
+- **Prescription (eRx)**: Medication (ref), Dosage, Quantity, ICD codes,
+  Pharmacy (ref, immutable), Prescriber (ref), Visit (ref) | metadata: status
+  (`Active → Cancel requested → No response → Canceled manually` or
+  `Canceled`), Date prescribed
 
 - **Medication**: Name, Strength, Form | metadata: drug class
 
-- **Pharmacy**: Name, Address, Phone | metadata: Pharmacy ID, role-on-patient
-  (primary / backup)
+- **Pharmacy**: Name, Chain, Address, Phone, Fax | metadata: Pharmacy ID,
+  role-on-patient (primary / backup)
 
-- **Appointment**: Date, Provider, Patient | metadata: status (scheduled /
-  completed / rescheduled)
+- **Provider**: Name, Specialty, State license(s) | metadata: Provider ID,
+  status (Active / Inactive)
 
-- **Provider**: Name, Specialty, License | metadata: Provider ID, EHR task queue
+- **Task**: Type (Prescription Issue | Refund | Care Audit | Discharge |
+  Tech Issue), Title, Description (currently carries multi-step instructions
+  as free text), Priority | metadata: status (Pending → In Progress →
+  On Hold | Completed), assigned team, created date, closed date,
+  Patient (ref), Visit (ref, optional), Prescription (ref, optional),
+  rejection reason (optional)
 
-- **Task**: Type (e.g. Prescription issue), Title, Description (currently
-  carries multi-step instructions as free text), Rejection Reason, Pharmacy
-  context, Backup pharmacy context, Medication list | metadata: Priority
-  (Highest / High / Medium / Low), Status (pending → in progress → completed),
-  Assignee (support team or Provider), Created by, Created at
+- **Document**: Type (Medical Records | ESA Letter | Treatment Letter |
+  Accommodation Letter | Discharge Letter | Clearance Letter | EKG Letter |
+  Good Faith Dispensing | Superbill), Content | metadata: sent/issued date,
+  Patient (ref), Visit (ref, optional), Provider (ref, optional)
 
-- **Insurance Claim**: Patient, Medication, Pharmacy, Health Plan Number |
-  metadata: status (submitted → approved / denied), Prior Auth required flag
+- **Insurance Claim**: Claim number, Submitted date, Denial reason, Appeal
+  notes | metadata: status (Submitted | Prior Auth Required | Approved |
+  Denied | Appealed), Health Plan (ref), Visit (ref), Medication (ref)
 
-- **Prior Authorization**: Patient, Medication, Insurance Company | metadata:
-  status (requested → approved / denied)
+- **Health Plan**: Plan name, Plan/Member number | metadata: Patient (ref)
 
-- **Medical Record**: Patient, Clinical History, ICD Codes, Medications |
-  metadata: last updated
+- **Refund**: Amount, Reason, Dispute flag | metadata: status (Pending |
+  Issued | Appealed), Visit (ref), Patient (ref)
 
-- **Letter**: Patient, Letter Type, Content | metadata: Sent date, Sent by,
-  Provider reference
+- **Call**: Date, Direction (Inbound / Outbound), Duration, Recording
+  reference | metadata: rating, agent, Patient (ref), Provider (ref, optional)
 
-- **Refund**: Patient, Appointment, Amount, Reason | metadata: status (pending
-  → issued / denied), linked Refund Report entry
-
-- **Superbill**: Patient, Appointment, Itemized Services, ICD/CPT codes |
-  metadata: issued date
-
-- **Phone Call**: Patient, Direction (inbound / outbound), Duration, Recording |
-  metadata: date, rating, agent
-
----
-
-## Judgment calls
-
-1. **Patient = Lead.** MEDvidi's system label "Lead" maps to "Patient" in the
-   real-world domain. The model uses "Patient." Confirm whether an unconverted
-   prospect (before their first appointment) is a distinct object or just
-   Patient at an early lifecycle status.
-
-2. **Prescription is immutable per pharmacy.** Derived from the cancel +
-   re-prescribe mechanism visible in Scenarios 1–3. Confirm: is there ever a
-   path where an existing eRx is rerouted (edited in place) rather than
-   cancelled and reissued?
-
-3. **Letter subtypes are one object with a `type` attribute.** ESA, treatment,
-   accommodation, discharge, clearance, EKG, and good faith dispensing letters
-   are modeled as instances of Letter. Elevate any subtype to its own object if
-   its attribute set or CTAs diverge significantly from the others.
-
-4. **Prior Authorization as a standalone object.** If PA is always an internal
-   step inside a claim submission, it may be a status on Insurance Claim rather
-   than its own object. Confirm whether PA has an independent lifecycle (e.g.
-   requested and tracked before a claim is even submitted).
-
-5. **Superbill vs. Refund are separate objects.** Refund = MEDvidi pays the
-   patient back. Superbill = MEDvidi provides a document so the patient can
-   claim reimbursement from their own insurer. Confirm if this distinction holds
-   in practice.
-
-6. **Task carries informal checklists.** Screenshots show task descriptions like
-   "Cancel initial prescription, assign task to provider, make sure prescription
-   arrived at pharmacy" — multi-step instructions in free text. This is a
-   current-state observation about implementation, not a model decision.
+- **Review**: Platform, Content, Sentiment | metadata: date, Patient (ref),
+  analyst notes
