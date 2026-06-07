@@ -6,9 +6,9 @@
   "description": "UX research & design skills for behavioural design — starting with OOUX object modeling.",
   "plugins": [
     {
-      "name": "ooux",
+      "name": "mental-models",
       "source": "./",
-      "description": "OOUX skills. Currently includes ooux-extract: build an object model (mental model) from scenarios or raw input via the ORCA process.",
+      "description": "OOUX skills. Currently includes extract: build an object model (mental model) from scenarios or raw input via the ORCA process.",
       "author": {
         "name": "provokatherine"
       },

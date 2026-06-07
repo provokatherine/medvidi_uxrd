@@ -1,5 +1,5 @@
 ---
-name: ooux-extract
+name: extract
 description: >-
   Build an OOUX object model (a mental model) from scenarios or raw user input.
   Use when the user wants to map a domain into objects, relationships, CTAs, and
