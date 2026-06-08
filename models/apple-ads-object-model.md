@@ -57,20 +57,85 @@
 - **CPP lives in App Store Connect, referenced in Apple Ads.** The relationship is a cross-system reference; the CPP publish lifecycle belongs to App Store Connect.
 - **Negative Keyword level (campaign vs. ad group) is a role on the relationship**, not a separate object type.
 
+### Object map
+
+```mermaid
+flowchart TD
+    subgraph OWN["Ownership"]
+        Advertiser
+        Agency
+        Account
+    end
+
+    subgraph FIN["Financial"]
+        Budget
+    end
+
+    subgraph STRUCT["Campaign Structure"]
+        Campaign
+        AdGroup["Ad Group"]
+    end
+
+    subgraph CREATIVE["Creative"]
+        AdCreative["Ad Creative"]
+        CreativeSet["Creative Set"]
+        CPP["Custom Product Page"]
+    end
+
+    subgraph TARGET["Targeting"]
+        Keyword
+        NegKeyword["Negative Keyword"]
+        AudienceSegment["Audience Segment"]
+    end
+
+    subgraph MEASURE["App & Measurement"]
+        App
+        ConversionEvent["Conversion Event"]
+        SKAdN["SKAdNetwork Postback"]
+        MarketInsight["Market Insight"]
+    end
+
+    Agency -->|manages| Account
+    Advertiser -->|belongs to| Account
+    Advertiser -->|owns| App
+    Advertiser -->|holds| Budget
+    Account -->|contains| Campaign
+    Budget -->|allocated to| Campaign
+    Campaign -->|"promotes (immutable)"| App
+    Campaign -->|contains| AdGroup
+    Campaign -.->|tracks| ConversionEvent
+    App -->|has| CPP
+    App -->|has| ConversionEvent
+    AdGroup -->|uses| AdCreative
+    AdGroup -->|targets| Keyword
+    AdGroup -->|excludes| NegKeyword
+    AdGroup -->|applies| AudienceSegment
+    AdGroup -.->|references| CPP
+    AdCreative -.->|sourced from| CreativeSet
+    AdGroup -.->|uses| CreativeSet
+    ConversionEvent -->|reported in| SKAdN
+    Keyword -.->|benchmarked by| MarketInsight
+    Campaign -.->|validated against| MarketInsight
+```
+
+*Solid arrows = primary structural relationships. Dashed = optional or secondary.*
+
 ---
 
 ## The Performance Funnel
 
 Metrics are attributes of Campaign and Ad Group, organised as a funnel. Marketing managers read top-to-bottom to diagnose where value is being lost.
 
-```
-Impressions  →  Taps  →  Installs  →  Conversion Events
-    (reach)     (intent)  (acquisition)    (value)
-      ↓            ↓           ↓                ↓
-  Imp. Share    TTR          CR             CPA / ROAS
-  Avg. Rank     CPT          CPI            LTV proxy
-                         New DL vs.
-                         Redownloads
+```mermaid
+flowchart LR
+    I["Impressions<br/><small>Imp. Share · Avg. Rank</small>"]
+    T["Taps<br/><small>TTR · CPT</small>"]
+    A["Installs<br/><small>CR · CPI · New DL vs Redownloads</small>"]
+    V["Conversion Events<br/><small>CPA · ROAS · LTV proxy</small>"]
+
+    I -->|TTR| T
+    T -->|CR| A
+    A -->|CPA| V
 ```
 
 | Funnel Stage | Metrics on Campaign / Ad Group |
